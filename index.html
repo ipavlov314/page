@@ -3,87 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UITest Results</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 20px;
-            color: #333;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        .section {
-            margin-bottom: 20px;
-        }
-        .section p {
-            margin: 0;
-        }
-        .divider {
-            border-bottom: 1px solid #ccc;
-            margin: 20px 0;
-        }
-        .button {
-            display: inline-block;
-            padding: 10px 15px;
-            background-color: #2c963f;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        .info {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-left: 5px solid #2c963f;
-        }
-        .error {
-            color: red;
-        }
-    </style>
+    <title>Dynamic UITest Reports</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<div class="container">
-    <div class="divider"></div>
+<!-- Dark Mode Toggle Button -->
+<button id="toggle-dark-mode" class="dark-mode-toggle">🌙 Toggle Dark Mode</button>
 
-    <div class="header">🍎 UITest Results - platform: #{create_variables[:platform_type]}</div>
-
-    <div class="section">
-        <p>📱 <strong>On-call</strong>: #{create_variables[:person_on_call]}</p>
-        <p><a href="#{create_variables[:validate_gha_html_report]}" class="button">🐱‍💻 GitHub Workflow - #{create_variables[:workflow]}</a></p>
-        <p><strong>Job Name</strong>: #{create_variables[:job_name]}</p>
-        <div class="info">
-            <p>Duration - <strong>#{create_variables[:duration]}</strong></p>
-            <p>Success rate - <strong>#{create_variables[:success_rate]}%</strong></p>
-            <p>🧪 #{create_variables[:failed_test]} of #{create_variables[:total_tests]} tests failing, #{create_variables[:skipped_test]} skipped</p>
-        </div>
+<!-- Summary and Chart Section -->
+<div class="summary-chart-container">
+    <!-- Overall Summary -->
+    <div class="summary-card" id="overall-summary">
+        <!-- Overall summary will be inserted here -->
     </div>
 
-    <div class="section">
-        <p><strong>Message about Runner:</strong></p>
-        <p>#{create_variables[:message_about_runner]}</p>
-        <a href="#{create_variables[:validation_xchtml_URL]}" class="button">#{create_variables[:validation_xchtml_URL_label]}</a>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="section">
-        <p class="error"><strong>Status:</strong> #{create_variables[:test_status]}</p>
-        <p class="error">#{create_variables[:error_messages]}</p>
+    <!-- Trend Chart -->
+    <div class="chart-container">
+        <canvas id="durationChart"></canvas>
     </div>
 </div>
+
+<!-- Divider -->
+<div class="divider"></div>
+
+<!-- Container for Reports -->
+<div class="container" id="reports-container">
+    <!-- Dynamic reports will be inserted here -->
+</div>
+
+<!-- Include Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Function to load text file
+    async function loadTextFile(filePath) {
+        const response = await fetch(filePath);
+        const text = await response.text();
+        return text;
+    }
+
+    // Function to parse CSV data
+    function parseCSV(data) {
+        const lines = data.split('\n').filter(line => line.trim() !== '');
+        const headers = lines[0].split(',');
+        const rows = lines.slice(1).map(line => {
+            const values = line.split(',');
+            let obj = {};
+            headers.forEach((header, index) => {
+                obj[header] = values[index];
+            });
+            return obj;
+        });
+        return rows;
+    }
+
+    // Function to calculate overall statistics
+    function calculateOverallStatistics(data) {
+        const totalTests = data.reduce((sum, item) => sum + Number(item.total_tests), 0);
+        const failedTests = data.reduce((sum, item) => sum + Number(item.failed_tests), 0);
+        const skippedTests = data.reduce((sum, item) => sum + Number(item.skipped_tests), 0);
+        const totalDuration = data.reduce((sum, item) => sum + Number(item.duration), 0);
+        const successRate = (100 - (failedTests / totalTests * 100)).toFixed(2);
+
+        return {
+            totalTests,
+            failedTests,
+            skippedTests,
+            totalDuration,
+            successRate
+        };
+    }
+
+    // Function to get CSS class for percentage rate
+    function getRateClass(rate) {
+        if (rate > 98) return 'high-rate';
+        if (rate > 95) return 'medium-rate';
+        if (rate < 90) return 'low-rate';
+        return '';
+    }
+
+    // Function to update reports and chart
+    function updateReportsAndChart(data) {
+        const reportsContainer = document.getElementById('reports-container');
+        const overallSummaryContainer = document.getElementById('overall-summary');
+        let durations = [];
+        let platforms = [];
+
+        // Clear any existing content
+        reportsContainer.innerHTML = '';
+
+        // Generate individual reports and chart data
+        data.forEach((item) => {
+            // Create report card
+            const reportCard = document.createElement('div');
+            reportCard.className = 'report-card';
+            const successRateClass = getRateClass(item.success_rate);
+            reportCard.innerHTML = `
+                <div class="header">🍎 UITest Results - platform: ${item.platform}</div>
+                <div class="section">
+                    <p>📱 <strong>On-call</strong>: John Doe</p>
+                    <p><a href="index ${item.reportNumber}.html" class="button">HTML report</a></p>
+                    <p><strong>Job Name</strong>: ${item.job_name}</p>
+                    <div class="info">
+                        <p>Duration - <strong>${item.duration} minutes</strong></p>
+                        <p>Success rate - <strong class="${successRateClass}">${item.success_rate}%</strong></p>
+                        <p>🧪 ${item.failed_tests} of ${item.total_tests} tests failing, ${item.skipped_tests} skipped</p>
+                    </div>
+                </div>
+            `;
+            reportsContainer.appendChild(reportCard);
+
+            // Collect data for chart
+            platforms.push(item.platform);
+            durations.push(Number(item.duration));
+        });
+
+        // Calculate and add overall summary report
+        const overallStats = calculateOverallStatistics(data);
+        const overallRateClass = getRateClass(overallStats.successRate);
+        overallSummaryContainer.innerHTML = `
+            <div class="header">🍎 UITest Overall Summary</div>
+            <div class="section">
+                <p><strong>Total Tests:</strong> ${overallStats.totalTests}</p>
+                <p><strong>Failed Tests:</strong> ${overallStats.failedTests}</p>
+                <p><strong>Skipped Tests:</strong> ${overallStats.skippedTests}</p>
+                <p><strong>Total Duration:</strong> ${overallStats.totalDuration} minutes</p>
+                <p><strong>Overall Success Rate:</strong> <span class="${overallRateClass}">${overallStats.successRate}%</span></p>
+            </div>
+        `;
+        
+        // Update the chart
+        const ctx = document.getElementById('durationChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: platforms,
+                datasets: [{
+                    label: 'Job Duration (minutes)',
+                    data: durations,
+                    backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)'],
+                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Duration Trend',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + ' minutes';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false,
+                elements: {
+                    bar: {
+                        borderWidth: 1
+                    }
+                }
+            }
+        });
+    }
+
+    // Function to toggle dark mode
+    function toggleDarkMode() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
+    // Load and display the data on page load
+    loadTextFile('data.txt')
+        .then(parseCSV)
+        .then(updateReportsAndChart)
+        .catch(error => console.error('Error loading or parsing the text file:', error));
+
+    // Initialize dark mode from localStorage
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+
+        // Add event listener to toggle button
+        document.getElementById('toggle-dark-mode').addEventListener('click', toggleDarkMode);
+    });
+</script>
 
 </body>
 </html>
