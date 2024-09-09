@@ -1,0 +1,26 @@
+platform,job_name,duration,success_rate,failed_tests,total_tests,skipped_tests,reportNumber
+iPhone,Community,25,100,0,50,2,47
+iPhone,Classes!,30,99,1,50,3,48
+iPhone,Home,40,92,97,250,1,49
+iPhone,Onboarding,50,98,1,50,0,50
+iPhone,Profile,55,95,3,50,4,51
+
+iPad,Community,20,92,4,50,2,52
+iPad,Classes!,35,87,6,50,5,53
+iPad,Home,50,94,3,50,2,54
+iPad,Onboarding,45,97,2,50,1,55
+iPad,Profile,60,89,5,50,3,56
+
+tvOS,TestPlan - 1,15,93,3,50,2,57
+tvOS,TestPlan - 2,25,96,2,50,1,58
+tvOS,TestPlan - 3,35,88,6,50,3,59
+tvOS,TestPlan - 4,45,91,4,50,2,60
+
+Visual,iOS,40,98,1,50,0,61
+Visual,Android,45,96,2,50,1,62
+
+Real Device,PR,20,85,7,50,4,63
+Real Device,Regression,30,90,5,50,3,64
+
+watchOS,TestPlan - 1,20,93,3,50,2,65
+watchOS,TestPlan - 2,35,95,2,50,1,66

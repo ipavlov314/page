@@ -1,0 +1,18 @@
+platform,job_name,duration,success_rate,failed_tests,total_tests,skipped_tests,reportNumber
+iPhone,Community,10,98,2,50,3,47
+iPad,Community,10,99,2,50,3,47
+iPhone,Classes!,8,100,0,250,2,48
+iPad,Classes!,8,89,3,45,2,48
+iPhone,Home,12,99,1,60,5,49
+iPad,Home,12,99,1,60,5,49
+iPhone,Onboarding,10,96,2,50,3,47
+iPad,Onboarding,10,96,2,50,3,47
+iPhone,Profile,8,89,3,45,2,48
+iPad,Profile,8,89,3,45,2,48
+iPhone,JWK,12,99,1,60,5,49
+iPad,JWK,12,99,1,60,5,49
+iPhone,Gym,10,96,2,50,3,47
+iPad,Gym,10,96,2,50,3,47
+iPhone,Program_schedulers,8,89,3,45,2,48
+iPad,Program_schedulers,8,89,3,45,2,48
+tvOS,Test Job 3,12,99,1,60,5,49

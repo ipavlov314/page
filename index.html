@@ -3,214 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic UITest Reports</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Display Objects</title>
+    <style>
+        .container {
+            position: relative;
+            width: 100%;
+        }
+        .dropdown {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10; /* Ensure it appears on top */
+            background: white; /* Background color to make it visible */
+            padding: 10px;
+        }
+        .object {
+            position: absolute;
+            width: 100%;
+        }
+        #main-object {
+            height: 400px;
+            top: 15px;
+        }
+        #mini-cards-object {
+            height: 600px;
+            top: 350px; /* Position this below the main object */
+        }
+    </style>
 </head>
 <body>
-
-<!-- Dark Mode Toggle Button -->
-<button id="toggle-dark-mode" class="dark-mode-toggle">🌙 Toggle Dark Mode</button>
-
-<!-- Summary and Chart Section -->
-<div class="summary-chart-container">
-    <!-- Overall Summary -->
-    <div class="summary-card" id="overall-summary">
-        <!-- Overall summary will be inserted here -->
+    <div class="container">
+        <div class="dropdown">
+            <label for="dataset-select">Select Dataset:</label>
+            <select id="dataset-select">
+                <!-- Options will be populated here -->
+            </select>
+        </div>
+        <object id="main-object" type="text/html" data="over_all.html" class="object"></object>
+        <object id="mini-cards-object" type="text/html" data="mini_cards.html" class="object"></object>
     </div>
 
-    <!-- Trend Chart -->
-    <div class="chart-container">
-        <canvas id="durationChart"></canvas>
-    </div>
-</div>
-
-<!-- Divider -->
-<div class="divider"></div>
-
-<!-- Container for Reports -->
-<div class="container" id="reports-container">
-    <!-- Dynamic reports will be inserted here -->
-</div>
-
-<!-- Include Chart.js library -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Function to load text file
-    async function loadTextFile(filePath) {
-        const response = await fetch(filePath);
-        const text = await response.text();
-        return text;
-    }
-
-    // Function to parse CSV data
-    function parseCSV(data) {
-        const lines = data.split('\n').filter(line => line.trim() !== '');
-        const headers = lines[0].split(',');
-        const rows = lines.slice(1).map(line => {
-            const values = line.split(',');
-            let obj = {};
-            headers.forEach((header, index) => {
-                obj[header] = values[index];
-            });
-            return obj;
-        });
-        return rows;
-    }
-
-    // Function to calculate overall statistics
-    function calculateOverallStatistics(data) {
-        const totalTests = data.reduce((sum, item) => sum + Number(item.total_tests), 0);
-        const failedTests = data.reduce((sum, item) => sum + Number(item.failed_tests), 0);
-        const skippedTests = data.reduce((sum, item) => sum + Number(item.skipped_tests), 0);
-        const totalDuration = data.reduce((sum, item) => sum + Number(item.duration), 0);
-        const successRate = (100 - (failedTests / totalTests * 100)).toFixed(2);
-
-        return {
-            totalTests,
-            failedTests,
-            skippedTests,
-            totalDuration,
-            successRate
-        };
-    }
-
-    // Function to get CSS class for percentage rate
-    function getRateClass(rate) {
-        if (rate > 98) return 'high-rate';
-        if (rate > 95) return 'medium-rate';
-        if (rate < 90) return 'low-rate';
-        return '';
-    }
-
-    // Function to update reports and chart
-    function updateReportsAndChart(data) {
-        const reportsContainer = document.getElementById('reports-container');
-        const overallSummaryContainer = document.getElementById('overall-summary');
-        let durations = [];
-        let platforms = [];
-
-        // Clear any existing content
-        reportsContainer.innerHTML = '';
-
-        // Generate individual reports and chart data
-        data.forEach((item) => {
-            // Create report card
-            const reportCard = document.createElement('div');
-            reportCard.className = 'report-card';
-            const successRateClass = getRateClass(item.success_rate);
-            reportCard.innerHTML = `
-                <div class="header">🍎 UITest Results - platform: ${item.platform}</div>
-                <div class="section">
-                    <p>📱 <strong>On-call</strong>: John Doe</p>
-                    <p><a href="index ${item.reportNumber}.html" class="button">HTML report</a></p>
-                    <p><strong>Job Name</strong>: ${item.job_name}</p>
-                    <div class="info">
-                        <p>Duration - <strong>${item.duration} minutes</strong></p>
-                        <p>Success rate - <strong class="${successRateClass}">${item.success_rate}%</strong></p>
-                        <p>🧪 ${item.failed_tests} of ${item.total_tests} tests failing, ${item.skipped_tests} skipped</p>
-                    </div>
-                </div>
-            `;
-            reportsContainer.appendChild(reportCard);
-
-            // Collect data for chart
-            platforms.push(item.platform);
-            durations.push(Number(item.duration));
-        });
-
-        // Calculate and add overall summary report
-        const overallStats = calculateOverallStatistics(data);
-        const overallRateClass = getRateClass(overallStats.successRate);
-        overallSummaryContainer.innerHTML = `
-            <div class="header">🍎 UITest Overall Summary</div>
-            <div class="section">
-                <p><strong>Total Tests:</strong> ${overallStats.totalTests}</p>
-                <p><strong>Failed Tests:</strong> ${overallStats.failedTests}</p>
-                <p><strong>Skipped Tests:</strong> ${overallStats.skippedTests}</p>
-                <p><strong>Total Duration:</strong> ${overallStats.totalDuration} minutes</p>
-                <p><strong>Overall Success Rate:</strong> <span class="${overallRateClass}">${overallStats.successRate}%</span></p>
-            </div>
-        `;
-        
-        // Update the chart
-        const ctx = document.getElementById('durationChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: platforms,
-                datasets: [{
-                    label: 'Job Duration (minutes)',
-                    data: durations,
-                    backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)'],
-                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Duration Trend',
-                        font: {
-                            size: 16
-                        }
-                    },
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.parsed.y + ' minutes';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                },
-                responsive: true,
-                maintainAspectRatio: false,
-                elements: {
-                    bar: {
-                        borderWidth: 1
-                    }
-                }
-            }
-        });
-    }
-
-    // Function to toggle dark mode
-    function toggleDarkMode() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        if (currentTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'light');
-            localStorage.setItem('theme', 'light');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        }
-    }
-
-    // Load and display the data on page load
-    loadTextFile('data.txt')
-        .then(parseCSV)
-        .then(updateReportsAndChart)
-        .catch(error => console.error('Error loading or parsing the text file:', error));
-
-    // Initialize dark mode from localStorage
-    document.addEventListener('DOMContentLoaded', () => {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        }
-
-        // Add event listener to toggle button
-        document.getElementById('toggle-dark-mode').addEventListener('click', toggleDarkMode);
-    });
-</script>
-
+    <script src="dropdown_datasets.js"></script>
 </body>
 </html>
